@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Поймай квадрат — с рекордами</title>
+<style>
+    body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background: #f0f0f0;
+        margin: 0;
+        font-family: Arial, sans-serif;
+    }
+
+    #game {
+        width: 500px;
+        height: 400px;
+        background: #ffffff;
+        border: 2px solid #000;
+        position: relative;
+        overflow: hidden;
+    }
+
+    #box {
+        width: 40px;
+        height: 40px;
+        background: red;
+        position: absolute;
+        cursor: pointer;
+        display: none;
+    }
+
+    #score, #timer {
+        position: absolute;
+        top: 10px;
+        font-size: 20px;
+        font-weight: bold;
+    }
+
+    #score { left: 10px; }
+    #timer { right: 10px; }
+
+    #leaderboard {
+        padding: 20px;
+        background: #fff;
+        border: 2px solid #000;
+        width: 300px;
+        margin-top: 20px;
+        display: none;
+    }
+
+    #leaderboard h2 {
+        margin: 0 0 10px;
+        text-align: center;
+    }
+</style>
+</head>
+
+<body>
+
+<div>
+    <div id="game">
+        <div id="score">Очки: 0</div>
+        <div id="timer">Время: 30</div>
+        <div id="box"></div>
+    </div>
+
+    <div id="leaderboard"></div>
+</div>
+
+<script>
+let game = document.getElementById("game");
+let box = document.getElementById("box");
+let scoreEl = document.getElementById("score");
+let timerEl = document.getElementById("timer");
+let leaderboardEl = document.getElementById("leaderboard");
+
+let score = 0;
+let timeLeft = 30;
+let gameActive = true;
+
+// Показываем квадрат каждые 800 мс
+let boxInterval = setInterval(() => {
+    if (!gameActive) return;
+
+    let x = Math.random() * (game.clientWidth - 40);
+    let y = Math.random() * (game.clientHeight - 40);
+
+    box.style.left = x + "px";
+    box.style.top = y + "px";
+    box.style.display = "block";
+}, 800);
+
+// Клик по квадрату
+box.onclick = function () {
+    if (!gameActive) return;
+    score++;
+    scoreEl.textContent = "Очки: " + score;
+    box.style.display = "none";
+};
+
+// Таймер
+let timerInterval = setInterval(() => {
+    if (!gameActive) return;
+
+    timeLeft--;
+    timerEl.textContent = "Время: " + timeLeft;
+
+    if (timeLeft <= 0) {
+        endGame();
+    }
+}, 1000);
+
+
+// Конец игры
+function endGame() {
+    gameActive = false;
+    box.style.display = "none";
+
+    clearInterval(timerInterval);
+    clearInterval(boxInterval);
+
+    saveScore(score);
+    showLeaderboard();
+}
+
+
+// ==== ЛИДЕРБОРД ====
+
+function saveScore(score) {
+    let records = JSON.parse(localStorage.getItem("records")) || [];
+
+    records.push(score);
+    records.sort((a, b) => b - a); // сортировка по убыванию
+
+    if (records.length > 5) records.length = 5; // храним топ-5
+
+    localStorage.setItem("records", JSON.stringify(records));
+}
+
+function showLeaderboard() {
+    let records = JSON.parse(localStorage.getItem("records")) || [];
+
+    leaderboardEl.style.display = "block";
+    leaderboardEl.innerHTML = "<h2>🏆 Рекорды</h2>";
+
+    if (records.length === 0) {
+        leaderboardEl.innerHTML += "<p>Пока нет результатов</p>";
+        return;
+    }
+
+    leaderboardEl.innerHTML += "<ol>" +
+        records.map(r => `<li>${r} очков</li>`).join("") +
+        "</ol>";
+}
+</script>
+
+</body>
+</html>
